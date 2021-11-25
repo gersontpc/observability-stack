@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+    app:
+      container_name: pythona-app
+      build:
+          context: python-app
+          dockerfile: Dockerfile
+      image: pythonapp:1.0
+      ports:
+          - 5000:5000
+      networks:
+          - spring-cloud-network
+networks:
+    spring-cloud-network:
+        driver: bridge

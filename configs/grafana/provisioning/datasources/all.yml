@@ -1,0 +1,111 @@
+# config file version
+apiVersion: 1
+
+# list of datasources that should be deleted from the database
+deleteDatasources:
+  - name: Prometheus
+    orgId: 1
+
+# list of datasources to insert/update depending
+# whats available in the database
+datasources:
+  # <string, required> name of the datasource. Required
+- name: 'Prometheus'
+  type: 'prometheus'
+  access: 'proxy'
+  org_id: 1
+  url: 'http://prometheus:9090'
+  is_default: true
+  version: 1
+  editable: true
+
+- name: Prometheus
+  type: prometheus
+  access: proxy
+  orgId: 1
+  url: http://prometheus:9090
+  basicAuth: false
+  isDefault: false
+  version: 1
+  editable: false
+
+- name: Loki
+  type: loki
+  access: proxy
+  url: http://loki:3100
+  jsonData:
+    maxLines: 1000
+
+- name: Jaeger
+  type: jaeger
+  uid: jaeger-spectra
+  access: proxy
+  url: http://jaeger:16686/
+  basicAuth: true
+  basicAuthUser: my_user
+  editable: true
+  isDefault: false
+  jsonData:
+    tracesToLogs:
+      # Field with internal link pointing to a Loki data source in Grafana.
+      # datasourceUid value must match the `datasourceUid` value of the Loki data source.
+      datasourceUid: Loki
+      # tags:
+      #   - cluster
+      #   - hostname
+      #   - namespace
+      #   - pod
+  # secureJsonData:
+  #   basicAuthPassword: my_password
+
+# - name: Loki
+#   type: loki
+#   access: proxy
+#   orgId: 1
+#   url: http://loki:3100
+#   basicAuth: false
+#   isDefault: false
+#   version: 1
+#   editable: false
+#   jsonData:
+#     derivedFields:
+#       - datasourceUid: tempo
+#         matcherRegex: \[.+,(.+),.+\]
+#         name: TraceID
+#         url: $${__value.raw}
+
+# - name: CloudWatch
+#   type: cloudwatch
+#   jsonData:
+#     authType: credentials
+#     defaultRegion: us-east-1
+#     customMetricsNamespaces: 'CWAgent,CustomNameSpace'
+#     profile: default
+
+# - name: Tempo
+#   type: tempo
+#   access: proxy
+#   orgId: 1
+#   url: http://tempo-query:16686
+#   basicAuth: false
+#   isDefault: false
+#   version: 1
+#   editable: false
+#   apiVersion: 1
+#   uid: tempo
+
+# - name: Tempo-Multitenant
+#   type: tempo
+#   access: proxy
+#   orgId: 1
+#   url: http://tempo-query:16686
+#   basicAuth: false
+#   isDefault: false
+#   version: 1
+#   editable: false
+#   apiVersion: 1
+#   uid: tempo-authed
+#   jsonData:
+#     httpHeaderName1: 'Authorization'
+#   secureJsonData:
+#     httpHeaderValue1: 'Bearer foo-bar-baz'

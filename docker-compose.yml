@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+
+  spring-app:
+    image: gersontpc/spring-app:latest
+    container_name: spring-app
+    ports:
+        - 8080:8080
+    deploy:
+      resources:
+        reservations:
+          cpus: "1"
+          memory: "512M"
+        limits:
+          cpus: "2"
+          memory: "1024M"
+    networks:
+        - stack-obs
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+
+  python-app:
+    image: gersontpc/python-app:latest
+    container_name: python-app
+    ports:
+        - 8081:8080
+        - 8082:8082
+    deploy:
+      resources:
+        reservations:
+          cpus: "1"
+          memory: "512M"
+        limits:
+          cpus: "2"
+          memory: "1024M"
+    networks:
+        - stack-obs
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+
+  prometheus:
+    image: prom/prometheus:v2.31.1
+    volumes:
+      - ./configs/prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - 9090:9090
+    links:
+      - app:app
+      - alertmanager:alertmanager
+    restart: always
+    deploy:
+      mode: global
+    networks:
+      - stack-obs
+
+  alertmanager:
+    image: prom/alertmanager:v0.23.0
+    ports:
+      - 9093:9093
+    volumes:
+      - ./configs/alertmanager/:/etc/alertmanager/
+    restart: always
+    deploy:
+      mode: global
+    networks:
+        - stack-obs
+
+  grafana:
+    image: grafana/grafana:latest
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./configs/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./configs/grafana/provisioning:/etc/grafana/provisioning
+      - ./home/gerson/.aws/credentials:/root/.aws/credentials
+    env_file:
+      - ./configs/grafana/config.monitoring
+    networks:
+      - stack-obs
+
+  loki:
+    image: grafana/loki:2.4.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - stack-obs
+
+  promtail:
+    image: grafana/promtail:2.4.0
+    command: -config.file=/etc/promtail/config.yml
+    ports:
+      - "9080:9080"
+    volumes:
+      - ./configs/promtail/config.yml:/etc/promtail/config.yml
+      - promtail_data:/var/log
+    networks:
+      - stack-obs
+
+  jaeger:
+    image: "jaegertracing/all-in-one:latest"
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "9411:9411"
+    networks:
+      - stack-obs
+
+volumes:
+    prometheus_data: {}
+    grafana_data: {}
+    loki_data: {}
+    promtail_data: {}
+
+networks:
+    stack-obs:
+        driver: bridge
