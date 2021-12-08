@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.apache.log4j.Logger;
+import io.opentracing.Tracer;
 
 @RestController
 @SpringBootApplication
